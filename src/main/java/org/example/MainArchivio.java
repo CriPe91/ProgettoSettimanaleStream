@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+
 public class MainArchivio {
 
     private static Scanner sc = new Scanner(System.in);
@@ -27,23 +28,49 @@ public class MainArchivio {
         System.out.println("Lista Catalogo: ");
         CreaListaCatalogo();
 
-        //Aggiunta elemento
-        aggiuntaElemento();
+        System.out.println("Seleziona un numero per operazione desiderata: ");
+        try{
+            int scelta = sc.nextInt();
+            sc.nextLine();
 
-        //Ricerca per anno publicazione
-        System.out.println("Inserisci anno per la ricerca: ");
-        RicercaAnnoPublicazione(Integer.parseInt(sc.nextLine()));
+            if(scelta == 0){
+                sc.close();
+                log.info("Programma terminato");
+            }else if(scelta == 1){
+                //Aggiunta elemento
+                aggiuntaElemento();
+            } else if (scelta == 2) {
+                //Ricerca per anno publicazione
+                System.out.println("Inserisci anno per la ricerca: ");
+                RicercaAnnoPublicazione(sc.nextInt());
+                sc.nextLine();
+            } else if (scelta == 3) {
+                //Ricerca per autore
+                System.out.println("Inserisci autore per la ricerca: ");
+                RicercaPerAutore();
+            } else if (scelta == 4) {
+                //Ricerca per ISBN
+                System.out.println("Inserisci codice per la ricerca: ");
+                RicercaPerIsbn(Integer.parseInt(sc.nextLine()));
+            } else if (scelta == 5) {
+                //Rimozione elemento
+                System.out.println("Inserisci ISBN per la rimozione :");
+                RimozioneElemento();
+            } else if (scelta == 6) {
+                //Aggiornamento di un elemento
+                modificaElementoCatalogo();
+            } else if (scelta == 7) {
+                //Statistiche del catalogo
+                StatisticheCatalogo();
+            }
+        } catch (InputMismatchException e) {
+            log.error(e.getMessage(),"Inserire un numero da 1 a 7");
+        }
 
 
-        //Ricerca per autore
-        System.out.println("Inserisci autore per la ricerca: ");
-        RicercaPerAutore(sc.nextLine().toLowerCase());
 
-        //Ricerca per ISBN
-        System.out.println("Inserisci codice per la ricerca: ");
-        RicercaPerIsbn(Integer.parseInt(sc.nextLine()));
 
-        //Rimozione elemento
+
 
     }
 
@@ -147,11 +174,14 @@ public class MainArchivio {
     }
 
     //Ricerca autore
-    public static void RicercaPerAutore(String autore){
+    public static void RicercaPerAutore(){
+        String autore = sc.nextLine().toLowerCase();
+
         ListaLibri.stream()
-                .filter(ListaLibri->ListaLibri.getAutore().equals(autore))
-                .peek(Libri-> System.out.println("Prodotto trovato(per autore): " + Libri))
-                .findFirst();
+                .filter(ListaLibri->ListaLibri.getAutore().equalsIgnoreCase(autore))
+                .findFirst()
+                .ifPresent(prodottoAutore -> System.out.println("Libro trovato :" + prodottoAutore));
+
     }
 
     //Ricerca ISBN
@@ -162,12 +192,114 @@ public class MainArchivio {
                 .findFirst();
     }
 
-//    //Rimozione di un elemento dato un ISBN
-//    public static void RimozioneElemento(){
-//         ListaCatalogo.stream()
-//               .filter(ListaCatalogo->ListaCatalogo.getCodiceIsbn() == codice)
-//
-//
-//    }
+    //Rimozione di un elemento dato un ISBN
+    public static void RimozioneElemento(){
+        int codice = sc.nextInt();
+
+         ListaCatalogo.stream()
+                 .filter(ListaCatalogo->ListaCatalogo.getCodiceIsbn() == codice)
+                 .findFirst()
+                 .ifPresentOrElse(CatalogoBibliotecario->{
+                     ListaCatalogo.removeIf(prodottoIsbn-> prodottoIsbn.getCodiceIsbn() == codice);
+                     System.out.println("Prodotto rimosso");
+                     ListaCatalogo.forEach(System.out::println);
+                         },
+                         ()-> System.out.println("Prodotto non rimosso")
+                 );
+
+    }
+
+    //Aggiornamento di un elemento dato ISBN
+    public static void modificaElementoCatalogo() {
+        System.out.println("Inserisci l'ISBN dell'elemento da modificare: ");
+        int nuovoIsbn = sc.nextInt();
+        sc.nextLine();
+
+        ListaCatalogo.stream()
+                .filter(catalogoBibliotecario -> catalogoBibliotecario.getCodiceIsbn() == nuovoIsbn)
+                .findFirst()
+                .ifPresentOrElse(prodottoModificato -> {
+                    if (prodottoModificato instanceof Libri libro) {
+                        System.out.println("Elemento trovato: " + libro);
+                        modificaLibro(libro);
+                    } else if (prodottoModificato instanceof Riviste rivista) {
+                        System.out.println("Elemento trovato: " + rivista);
+                        modificaRivista(rivista);
+                    }
+                }, () -> {
+                    System.out.println("Nessun prodotto trovato con ISBN " + nuovoIsbn);
+                });
+    }
+
+    // Metodo per la modifica di un libro
+    private static void modificaLibro(Libri libro) {
+        System.out.println("Modifica le proprietà del libro:");
+
+        System.out.print("Nuovo titolo: " + libro.getTitolo());
+        libro.setTitolo(sc.nextLine());
+
+        System.out.print("Nuovo anno di pubblicazione: " + libro.getAnnoPublicazione());
+        libro.setAnnoPublicazione(sc.nextInt());
+        sc.nextLine();
+
+        System.out.print("Nuovo numero di pagine: " + libro.getNumeroPagine());
+        libro.setNumeroPagine(sc.nextInt());
+        sc.nextLine();
+
+        System.out.print("Nuovo autore: " + libro.getAutore());
+        libro.setAutore(sc.nextLine());
+
+        System.out.print("Nuovo genere: " + libro.getGenere());
+        libro.setGenere(sc.nextLine());
+
+        System.out.println("Libro modificato: " + libro);
+    }
+
+    // Metodo per la modifica di una rivista
+    private static void modificaRivista(Riviste rivista) {
+        System.out.println("Modifica le proprietà della rivista:");
+
+        System.out.print("Nuovo titolo: " + rivista.getTitolo());
+        rivista.setTitolo(sc.nextLine());
+
+        System.out.print("Nuovo anno di pubblicazione: " + rivista.getAnnoPublicazione());
+        rivista.setAnnoPublicazione(sc.nextInt());
+        sc.nextLine();
+
+        System.out.print("Nuovo numero di pagine: " + rivista.getNumeroPagine());
+        rivista.setNumeroPagine(sc.nextInt());
+        sc.nextLine();
+
+        System.out.print("Nuova periodicità: " + rivista.getPeriodicitaEnum());
+        String nuovaPeriodicita = sc.nextLine();
+        Periodicita nuovaPeriodicitaEnum = Periodicita.valueOf(nuovaPeriodicita);
+        rivista.setPeriodicitaEnum(nuovaPeriodicitaEnum);
+
+        System.out.println("Rivista modificata: " + rivista);
+    }
+
+    //Statistiche catalogo
+    public static void StatisticheCatalogo(){
+        long libriPresenti = ListaCatalogo.stream()
+                .filter(Libri.class::isInstance)
+                .count();
+        System.out.println("Totale Libri: " + libriPresenti);
+
+        long rivistePresenti = ListaCatalogo.stream()
+                .filter(Riviste.class::isInstance)
+                .count();
+        System.out.println("Totale Riviste: " + rivistePresenti);
+
+       CatalogoBibliotecario maggiorNumPag = ListaCatalogo.stream()
+                .max(Comparator.comparing(CatalogoBibliotecario::getNumeroPagine))
+                .orElseThrow(NoSuchElementException::new);
+        System.out.println("Elemento con numero maggiore di pagine: " + maggiorNumPag);
+
+        OptionalDouble mediaPagine = ListaCatalogo.stream()
+                .mapToInt(CatalogoBibliotecario::getNumeroPagine)
+                .average();
+        System.out.println("Media pagine degli elementi: " + mediaPagine);
+
+    }
 
 }
